@@ -1,7 +1,7 @@
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-import { searchImages } from './pixabay-api';
-import { renderGallery, clearGallery, showLoader, hideLoader } from './render-functions';
+import { searchImages } from './js/pixabay-api';
+import { renderGallery, clearGallery, showLoader, hideLoader } from './js/render-functions';
 
 // Элементы DOM
 const searchForm = document.querySelector('.search-form');
