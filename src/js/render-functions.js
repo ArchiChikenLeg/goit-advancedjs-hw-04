@@ -52,15 +52,20 @@ const createImageCard = (image) => {
 };
 
 /**
- * Отображает галерею изображений
- * @param {Array} images - массив объектов изображений
- * @param {HTMLElement} galleryElement - элемент галереи в DOM
- */
-export const renderGallery = (images, galleryElement) => {
-  const markup = images.map((image) => createImageCard(image)).join('');
-  galleryElement.innerHTML = markup;
 
-  // Инициализируем или обновляем SimpleLightbox
+ * @param {Array} images 
+ * @param {HTMLElement} galleryElement
+ */
+export const renderGallery = (images, galleryElement, { append = false } = {}) => {
+  const markup = images.map((image) => createImageCard(image)).join('');
+
+  if (append) {
+    galleryElement.insertAdjacentHTML('beforeend', markup);
+  } else {
+    galleryElement.innerHTML = markup;
+  }
+
+
   if (lightbox) {
     lightbox.refresh();
   } else {
@@ -74,24 +79,23 @@ export const renderGallery = (images, galleryElement) => {
 };
 
 /**
- * Очищает содержимое галереи
- * @param {HTMLElement} galleryElement - элемент галереи в DOM
+
+ * @param {HTMLElement} galleryElement 
  */
 export const clearGallery = (galleryElement) => {
   galleryElement.innerHTML = '';
 };
 
 /**
- * Показывает индикатор загрузки
- * @param {HTMLElement} loaderElement - элемент индикатора загрузки
+
+ * @param {HTMLElement} loaderElement 
  */
 export const showLoader = (loaderElement) => {
   loaderElement.style.display = 'block';
 };
 
 /**
- * Скрывает индикатор загрузки
- * @param {HTMLElement} loaderElement - элемент индикатора загрузки
+ * @param {HTMLElement} loaderElement 
  */
 export const hideLoader = (loaderElement) => {
   loaderElement.style.display = 'none';

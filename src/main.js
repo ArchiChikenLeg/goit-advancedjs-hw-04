@@ -3,21 +3,26 @@ import 'izitoast/dist/css/iziToast.min.css';
 import { searchImages } from './js/pixabay-api';
 import { renderGallery, clearGallery, showLoader, hideLoader } from './js/render-functions';
 
-// Элементы DOM
+
 const searchForm = document.querySelector('.search-form');
 const galleryElement = document.querySelector('.gallery');
 const loaderElement = document.querySelector('.loader');
+const loadMoreBtn = document.querySelector('.load-more');
 
-/**
- * Обработчик события отправки формы поиска
- */
+
+let currentQuery = '';
+let page = 1;
+const perPage = 15;
+let totalHits = 0;
+
+
 const handleFormSubmit = async (event) => {
   event.preventDefault();
 
   const searchInput = searchForm.querySelector('input[name="searchQuery"]');
   const query = searchInput.value.trim();
 
-  // Проверка на пустую строку
+
   if (!query) {
     iziToast.warning({
       title: 'Warning',
@@ -28,18 +33,21 @@ const handleFormSubmit = async (event) => {
     return;
   }
 
-  // Очищаем галерею и показываем загрузчик
   clearGallery(galleryElement);
+
+  currentQuery = query;
+  page = 1;
+  totalHits = 0;
+  loadMoreBtn.style.display = 'none';
   showLoader(loaderElement);
 
   try {
-    // Выполняем поиск
-    const data = await searchImages(query);
 
-    // Скрываем загрузчик
+    const data = await searchImages({ query, page, per_page: perPage });
+
     hideLoader(loaderElement);
 
-    // Проверяем результаты
+
     if (data.hits.length === 0) {
       iziToast.error({
         title: 'No Results',
@@ -52,8 +60,16 @@ const handleFormSubmit = async (event) => {
       return;
     }
 
-    // Отображаем галерею
-    renderGallery(data.hits, galleryElement);
+
+    renderGallery(data.hits, galleryElement, { append: false });
+    totalHits = data.totalHits || 0;
+
+
+    if (totalHits > page * perPage) {
+      loadMoreBtn.style.display = 'inline-block';
+    } else {
+      loadMoreBtn.style.display = 'none';
+    }
     searchInput.value = '';
   } catch (error) {
     hideLoader(loaderElement);
@@ -67,5 +83,52 @@ const handleFormSubmit = async (event) => {
   }
 };
 
-// Подключаем обработчик события
+
 searchForm.addEventListener('submit', handleFormSubmit);
+
+loadMoreBtn.addEventListener('click', async () => {
+  if (!currentQuery) return;
+
+  page += 1;
+  loadMoreBtn.style.display = 'none';
+  showLoader(loaderElement);
+
+  try {
+    const data = await searchImages({ query: currentQuery, page, per_page: perPage });
+    hideLoader(loaderElement);
+
+    if (data.hits.length > 0) {
+      renderGallery(data.hits, galleryElement, { append: true });
+
+      const firstCard = galleryElement.querySelector('.gallery-item');
+      if (firstCard) {
+        const { height } = firstCard.getBoundingClientRect();
+        window.scrollBy({ top: height * 2, behavior: 'smooth' });
+      }
+    }
+
+    totalHits = data.totalHits || totalHits;
+
+    if (page * perPage >= totalHits) {
+
+      loadMoreBtn.style.display = 'none';
+      iziToast.info({
+        title: 'End',
+        message: "We're sorry, but you've reached the end of search results.",
+        position: 'topRight',
+        timeout: 4000,
+      });
+    } else {
+      loadMoreBtn.style.display = 'inline-block';
+    }
+  } catch (error) {
+    hideLoader(loaderElement);
+    console.error('Load more error:', error);
+    iziToast.error({
+      title: 'Error',
+      message: 'Failed to load more images. Please try again!',
+      position: 'topRight',
+      timeout: 4000,
+    });
+  }
+});
